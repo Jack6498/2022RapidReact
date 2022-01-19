@@ -1,0 +1,25 @@
+{
+  "NTProvider": {
+    "types": {
+      "/FMSInfo": "FMSInfo",
+      "/LiveWindow/DriveBase": "Subsystem",
+      "/LiveWindow/Ungrouped/DifferentialDrive[1]": "DifferentialDrive",
+      "/LiveWindow/Ungrouped/Scheduler": "Scheduler",
+      "/Shuffleboard/DriveBase/field": "Field2d"
+    }
+  },
+  "NetworkTables": {
+    "Shuffleboard": {
+      "DriveBase": {
+        "field": {
+          "open": true
+        },
+        "open": true
+      },
+      "RobotContainer": {
+        "open": true
+      },
+      "open": true
+    }
+  }
+}
