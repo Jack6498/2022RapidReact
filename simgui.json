@@ -5,7 +5,15 @@
       "/LiveWindow/DriveBase": "Subsystem",
       "/LiveWindow/Ungrouped/DifferentialDrive[1]": "DifferentialDrive",
       "/LiveWindow/Ungrouped/Scheduler": "Scheduler",
-      "/Shuffleboard/DriveBase/field": "Field2d"
+      "/Shuffleboard/DriveBase/field": "Field2d",
+      "/SmartDashboard/Field": "Field2d"
+    },
+    "windows": {
+      "/SmartDashboard/Field": {
+        "window": {
+          "visible": true
+        }
+      }
     }
   },
   "NetworkTables": {
@@ -17,6 +25,12 @@
         "open": true
       },
       "RobotContainer": {
+        "open": true
+      },
+      "open": true
+    },
+    "SmartDashboard": {
+      "Field": {
         "open": true
       },
       "open": true

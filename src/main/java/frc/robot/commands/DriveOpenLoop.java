@@ -41,8 +41,8 @@ public class DriveOpenLoop extends CommandBase {
     if (reverse.getAsDouble() < forward.getAsDouble()) {
       drive.setArcadeDrive(forward.getAsDouble(), turn.getAsDouble());
     }
-    else if (reverse.getAsDouble() > forward.getAsDouble()) {
-      drive.setArcadeDrive(-reverse.getAsDouble(), turn.getAsDouble());
+    else if (reverse.getAsDouble() > 0) {
+      drive.setArcadeDrive(-forward.getAsDouble(), turn.getAsDouble());
     }
     
   }

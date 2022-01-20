@@ -42,7 +42,7 @@ public class UnitConverter {
         return units;
     }
 
-    public static int velocityToSensorUnits(double velocityMetersPerSecond) {
+    public static int metersPerSecondToSensorUnits(double velocityMetersPerSecond) {
         double wheelRotationsPerSecond = velocityMetersPerSecond / wheelCircumference;
         double motorRotationsPerSecond = wheelRotationsPerSecond * gearRatio;
         double motorRotationsPer100ms = motorRotationsPerSecond / 10;

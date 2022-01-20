@@ -33,28 +33,29 @@ public final class Constants {
                 new Translation2d(9.28, 5.76), 
                 new Rotation2d()
             );
-            public static final Pose2d red3StartingPose = 
+        public static final Pose2d red3StartingPose = 
             new Pose2d(
                 new Translation2d(10.29, 6.19), 
                 new Rotation2d()
             );
-            public static final Pose2d blue1StartingPose = 
+        public static final Pose2d blue1StartingPose = 
             new Pose2d(
                 new Translation2d(6.27, 4.88), 
                 new Rotation2d()
             );
-            public static final Pose2d blue2StartingPose = 
+        public static final Pose2d blue2StartingPose = 
             new Pose2d(
                 new Translation2d(7.00, 2.65), 
                 new Rotation2d()
             );
-            public static final Pose2d blue3StartingPose = 
+        public static final Pose2d blue3StartingPose = 
             new Pose2d(
                 new Translation2d(8.05, 2.113), 
                 new Rotation2d()
             );
-            public static final double wheelDiameterInches = 4;
-            public static final double gearRatio = 30;
+        public static final double wheelDiameterInches = 4;
+        public static final double gearRatio = 30;
+        public static final double trackWidthInches = 36;
 
     }
 }

@@ -10,25 +10,22 @@ import edu.wpi.first.hal.SimDouble;
 import edu.wpi.first.hal.simulation.SimDeviceDataJNI;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.SPI;
-import edu.wpi.first.wpilibj.SPI.Port;
-import edu.wpi.first.wpilibj.simulation.SimDeviceSim;
 import frc.robot.Robot;
 
 /** Add your docs here. */
 public class AHRSSim {
     AHRS realGyro;
-    int fakeGyro;
-    SimDeviceSim falseGyro;
     SimDouble simAngle;
     
     public AHRSSim(SPI.Port port) {
         if (Robot.isReal()) {
             realGyro = new AHRS(port);
         } else {
-            //fakeGyro = SimDeviceDataJNI.getSimDeviceHandle("navX-Sensor[0]");
-            //simAngle = new SimDouble(SimDeviceDataJNI.getSimValueHandle(fakeGyro, "Yaw"));
-            falseGyro = new SimDeviceSim("navX-Sensor[0]");
-            simAngle = falseGyro.getDouble("Yaw");
+            simAngle = new SimDouble(
+                SimDeviceDataJNI.getSimValueHandle(
+                    SimDeviceDataJNI.getSimDeviceHandle("navX-Sensor"), "Yaw"
+                )
+            );
         }
     }
 

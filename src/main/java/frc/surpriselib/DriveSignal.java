@@ -4,8 +4,6 @@
 
 package frc.surpriselib;
 
-import frc.robot.Constants;
-
 /** Add your docs here. */
 public class DriveSignal {
     public double leftMotor;
