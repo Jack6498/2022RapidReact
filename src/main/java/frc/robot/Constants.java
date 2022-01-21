@@ -56,6 +56,8 @@ public final class Constants {
         public static final double wheelDiameterInches = 4;
         public static final double gearRatio = 30;
         public static final double trackWidthInches = 36;
+        public static final double robotMassPounds = 130;
+        public static final double robotMOI = 4;
 
     }
 }

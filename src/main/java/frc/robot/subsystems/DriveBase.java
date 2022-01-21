@@ -28,168 +28,94 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
-import frc.surpriselib.wrappers.AHRSSim;
+import frc.surpriselib.wrappers.AHRSWrap;
 import io.github.oblarg.oblog.Loggable;
+import io.github.oblarg.oblog.annotations.Log;
 
 public class DriveBase extends SubsystemBase implements Loggable {
-  // MOTORS AND DRIVE
-  WPI_TalonFX leftLeader, leftFollower, rightLeader, rightFollower;
-  MotorControllerGroup leftMotors, rightMotors;
-  DifferentialDriveKinematics kinematics;
-  DifferentialDriveOdometry odometry;
-  DifferentialDrive diffDrive;
-  ChassisSpeeds chassisSpeeds;
-  WPI_TalonFX[] motors = new WPI_TalonFX[] { leftLeader, leftFollower, rightLeader, rightFollower };
+  // Gyro
+  private AHRSWrap navX = new AHRSWrap(Port.kMXP);
 
- // SIM OBJECTS
-  TalonFXSimCollection leftSim;
-  TalonFXSimCollection rightSim;
-  AHRSSim gyro;
-  DifferentialDrivetrainSim driveSim;
-  //@Log
-  Field2d field = new Field2d();
-  // sim end
+  // Falcons
+  private WPI_TalonFX leftLeader = new WPI_TalonFX(leftLeaderCANId);
+  private WPI_TalonFX leftFollower = new WPI_TalonFX(leftFollowerCANId);
+  private WPI_TalonFX rightLeader = new WPI_TalonFX(rightLeaderCANId);
+  private WPI_TalonFX rightFollower = new WPI_TalonFX(rightFollowerCANId);
+  private MotorControllerGroup leftMotors = new MotorControllerGroup(leftLeader, leftFollower);
+  private MotorControllerGroup rightMotors = new MotorControllerGroup(rightLeader, rightFollower);
+  private DifferentialDrive diffDrive = new DifferentialDrive(leftMotors, rightMotors);
+  private DifferentialDriveOdometry odometry;
 
-  Pose2d robotPose;
+  // Simulators
+  private TalonFXSimCollection leftSim = leftLeader.getSimCollection();
+  private TalonFXSimCollection rightSim = rightLeader.getSimCollection();
+  private DifferentialDrivetrainSim driveSim = new DifferentialDrivetrainSim(
+    DCMotor.getFalcon500(2), 
+    gearRatio, 
+    robotMOI, 
+    Units.lbsToKilograms(robotMassPounds), 
+    Units.inchesToMeters(wheelDiameterInches/2), 
+    Units.inchesToMeters(trackWidthInches), 
+    VecBuilder.fill(0.001, 0.001, 0.001, 0.1, 0.1, 0.005, 0.005)
+  );
   
-  double ramp = 2;
-
-  /** Creates a new DriveBase. */
+  Field2d field2d = new Field2d();
+  
   public DriveBase() {
-    // motors
-    leftLeader = new WPI_TalonFX(leftLeaderCANId);
-    leftFollower = new WPI_TalonFX(leftFollowerCANId);
-    rightLeader = new WPI_TalonFX(rightLeaderCANId);
-    rightFollower = new WPI_TalonFX(rightFollowerCANId);
-    leftMotors = new MotorControllerGroup(leftLeader, leftFollower);
-    rightMotors = new MotorControllerGroup(rightLeader, rightFollower);
-    leftLeader.configOpenloopRamp(ramp);
-    leftFollower.configOpenloopRamp(ramp);
-    rightLeader.configOpenloopRamp(ramp);
-    rightFollower.configOpenloopRamp(ramp);
-    // gyro
-    gyro = new AHRSSim(Port.kMXP);
+    resetSensors();
+    odometry = new DifferentialDriveOdometry(navX.getRotation2d());
+    SmartDashboard.putData("Field", field2d);
+    diffDrive.setSafetyEnabled(false);
+    leftFollower.follow(leftLeader);
+    rightFollower.follow(rightLeader);
+  }
 
-    // wpi
-    resetEncoders();
-    gyro.reset();
-    odometry = new DifferentialDriveOdometry(gyro.getRotation2d());
-    kinematics = new DifferentialDriveKinematics(Units.inchesToMeters(trackWidthInches));
-    odometry = new DifferentialDriveOdometry(gyro.getRotation2d());
-    chassisSpeeds = new ChassisSpeeds(0, 0, 0);
-    robotPose = new Pose2d();
-    if (Robot.isReal()) {
-      diffDrive = new DifferentialDrive(leftMotors, rightMotors);
-    }
-    // sim
-    driveSim = new DifferentialDrivetrainSim(
-      DCMotor.getFalcon500(2),
-      gearRatio,
-      3.2, // moment of inertia from cad model
-      26.5, // mass of robot in kg
-      Units.inchesToMeters(wheelDiameterInches), // wheel diameter in meters
-      1.0, // robot track width in meters
-      // The standard deviations for measurement noise:
-      // x and y:          0.001 m
-      // heading:          0.001 rad
-      // l and r velocity: 0.1   m/s
-      // l and r position: 0.005 m
-      VecBuilder.fill(0.001, 0.001, 0.001, 0.1, 0.1, 0.005, 0.005)
+  @Override
+  public void periodic() {
+    odometry.update(
+      navX.getRotation2d(), 
+      sensorUnitsToMeters(leftLeader.getSelectedSensorPosition()), 
+      sensorUnitsToMeters(rightLeader.getSelectedSensorPosition())
     );
-    leftSim = new TalonFXSimCollection(leftLeader);
-    rightSim = new TalonFXSimCollection(rightLeader);
-    SmartDashboard.putData("Field", field);
+    field2d.setRobotPose(odometry.getPoseMeters());
   }
 
-  public void setStartingPose(Pose2d pose)
-  {
-    odometry.resetPosition(pose, gyro.getRotation2d());
+  @Override
+  public void simulationPeriodic() {
+    driveSim.setInputs(leftLeader.getMotorOutputVoltage(), rightLeader.getMotorOutputVoltage());
+    driveSim.update(0.02);
+
+    leftSim.setIntegratedSensorRawPosition(metersToSensorUnits(driveSim.getLeftPositionMeters()));
+    leftSim.setIntegratedSensorVelocity(metersPerSecondToSensorUnits(driveSim.getLeftVelocityMetersPerSecond()));
+    rightSim.setIntegratedSensorRawPosition(metersToSensorUnits(driveSim.getRightPositionMeters()));
+    rightSim.setIntegratedSensorVelocity(metersPerSecondToSensorUnits(driveSim.getRightVelocityMetersPerSecond()));
+
+    leftSim.setBusVoltage(RobotController.getBatteryVoltage());
+    rightSim.setBusVoltage(RobotController.getBatteryVoltage());
   }
 
-  private void resetEncoders()
-  {
+  public void drive(double throttle, double turn, boolean squareInputs) {
+      diffDrive.arcadeDrive(throttle, turn, squareInputs);
+  }
+
+  public void stop() {
+    leftMotors.set(0);
+    rightMotors.set(0);
+  }
+
+  public void setBrakeMode(NeutralMode brakeMode) {
+    leftLeader.setNeutralMode(brakeMode);
+    leftFollower.setNeutralMode(brakeMode);
+    rightLeader.setNeutralMode(brakeMode);
+    rightFollower.setNeutralMode(brakeMode);
+  }
+
+  private void resetSensors() {
+    navX.reset();
     leftLeader.setSelectedSensorPosition(0);
     leftFollower.setSelectedSensorPosition(0);
     rightLeader.setSelectedSensorPosition(0);
     rightFollower.setSelectedSensorPosition(0);
   }
 
-  public void setArcadeDrive(double throttle, double turn)
-  {
-    diffDrive.arcadeDrive(throttle, turn);
-    
-  }
-
-  public void stop(NeutralMode brake) {
-    leftMotors.set(0);
-    rightMotors.set(0);
-    leftLeader.setNeutralMode(brake);
-    leftFollower.setNeutralMode(brake);
-    rightLeader.setNeutralMode(brake);
-    rightFollower.setNeutralMode(brake);
-  }
-
-  @Override
-  public void periodic() {
-    odometry.update(
-      gyro.getRotation2d(), 
-      sensorUnitsToMeters(
-        leftLeader.getSelectedSensorPosition()
-      ), 
-      sensorUnitsToMeters(
-        rightLeader.getSelectedSensorPosition()
-      )
-    );
-    DifferentialDriveWheelSpeeds wheelSpeeds = 
-      new DifferentialDriveWheelSpeeds(
-        sensorUnitsToMetersPerSecond(
-          leftLeader.getSelectedSensorVelocity()
-        ),
-        sensorUnitsToMetersPerSecond(
-          rightLeader.getSelectedSensorVelocity()
-        )
-      );
-      chassisSpeeds = kinematics.toChassisSpeeds(wheelSpeeds);
-    field.setRobotPose(odometry.getPoseMeters());
-  }
-
-  @Override
-  public void simulationPeriodic() {
-    // set inputs
-    // USE VOLTAGE
-    driveSim.setInputs(
-      leftLeader.getMotorOutputVoltage(), 
-      rightLeader.getMotorOutputVoltage()
-    );
-    leftLeader.feed();
-    rightLeader.feed();
-    // advance by 20ms (Robot loop)
-    driveSim.update(0.02);
-
-    // update sensors
-    leftSim.setIntegratedSensorRawPosition(
-      metersToSensorUnits(
-        driveSim.getLeftPositionMeters()
-      )
-    );
-    leftSim.setIntegratedSensorVelocity(
-      metersPerSecondToSensorUnits(
-        driveSim.getLeftVelocityMetersPerSecond()
-      )
-    );
-    rightSim.setIntegratedSensorRawPosition(
-      metersToSensorUnits(
-        driveSim.getRightPositionMeters()
-      )
-    );
-    rightSim.setIntegratedSensorVelocity(
-      metersPerSecondToSensorUnits(
-        driveSim.getRightVelocityMetersPerSecond()
-      )
-    );
-    gyro.setAngle(-driveSim.getHeading().getDegrees());
-    
-    leftSim.setBusVoltage(RobotController.getBatteryVoltage());
-    rightSim.setBusVoltage(RobotController.getBatteryVoltage());
-  }
 }

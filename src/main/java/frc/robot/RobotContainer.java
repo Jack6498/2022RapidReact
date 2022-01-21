@@ -26,6 +26,7 @@ public class RobotContainer {
   public RobotContainer() {
     // Configure the button bindings
     configureButtonBindings();
+    driveBase.setDefaultCommand(driveOpenLoop);
   }
 
   /**

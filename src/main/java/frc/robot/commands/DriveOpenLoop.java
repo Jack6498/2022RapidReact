@@ -38,13 +38,15 @@ public class DriveOpenLoop extends CommandBase {
   @Override
   public void execute() {
     // going forwards
-    if (reverse.getAsDouble() < forward.getAsDouble()) {
-      drive.setArcadeDrive(forward.getAsDouble(), turn.getAsDouble());
+    if (!getReverse()) {
+      drive.drive(forward.getAsDouble(), turn.getAsDouble(), true);
+    } else {
+      drive.drive(reverse.getAsDouble(), turn.getAsDouble(), true);
     }
-    else if (reverse.getAsDouble() > 0) {
-      drive.setArcadeDrive(-forward.getAsDouble(), turn.getAsDouble());
-    }
-    
+  }
+
+  private boolean getReverse() {
+    return reverse.getAsDouble() > forward.getAsDouble();
   }
 
   // Called once the command ends or is interrupted.
