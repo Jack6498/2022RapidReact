@@ -60,4 +60,9 @@ public final class Constants {
         public static final double robotMOI = 4;
 
     }
+
+    public static final class ShooterConstants {
+        public static final int flywheelCANId = 14;
+        public static final double flywheel_kP = 0.0001;
+    }
 }
